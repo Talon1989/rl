@@ -125,3 +125,20 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+.idea/.gitignore
+.idea/dictionaries/
+.idea/inspectionProfiles/
+.idea/misc.xml
+.idea/modules.xml
+.idea/other.xml
+.idea/rl.iml
+.idea/vcs.xml
+contextual_bandits.py
+contextual_bandits_2.py
+custom_deep_nn.py
+data/
+laplace_approximation_data_w_gamma_prior.py
+main.py
+multi_armed_bandit.py
+train.py
+train_2.py
