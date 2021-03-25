@@ -8,7 +8,6 @@ import gym
 #     env.step(env.action_space.sample())
 # env.close()
 
-print('working')
 
 
 

@@ -19,6 +19,7 @@
       <w>showlegend</w>
       <w>timestep</w>
       <w>ucbs</w>
+      <w>usecols</w>
     </words>
   </dictionary>
 </component>
