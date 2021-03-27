@@ -3,8 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import requests
 import io
-from tensorflow import keras
-from keras.layers import Dense, Dropout
+# from tensorflow import keras
+import keras
 
 # adults = pd.read_csv('data/adult.data', header=None)
 
@@ -51,7 +51,7 @@ for from_level, to_level in edu_mapping.items():
 
 #  convert categorical data to one-hot vectors
 context_cols = [c for c in usecols if c != 'education']
-df_data = pd.concat(
+df_data_ = pd.concat(
     [pd.get_dummies(df_census[context_cols]), df_census['education']], axis=1
 )
 
@@ -101,6 +101,143 @@ def display_ad(ad_click_probas, user, ad):
 #  FUNCTION APPROXIMATION USING A NN
 
 
+def get_model(n_input, dropout):
+
+    inputs = keras.Input(shape=(n_input,))
+
+    X_1 = keras.layers.Dense(256, activation='relu')(inputs)
+    if dropout > 0:
+        X_1 = keras.layers.Dropout(dropout)(X_1, training=True)
+
+    X_2 = keras.layers.Dense(256, activation='relu')(X_1)
+    if dropout > 0:
+        X_2 = keras.layers.Dropout(dropout)(X_2, training=True)
+
+    phat = keras.layers.Dense(1, activation='sigmoid')(X_2)
+
+    model = keras.Model(inputs, phat)
+    model.compile(
+        loss=keras.losses.BinaryCrossentropy(),
+        optimizer=keras.optimizers.Adam(),
+        metrics=['accuracy']
+    )
+    return model
+
+    # from keras.layers import Dense
+    # from keras.layers import Dropout
+    # inputs = keras.Input(shape=(n_input,))
+    # x = Dense(256, activation='relu')(inputs)
+    # if dropout > 0:
+    #     x = Dropout(dropout)(x, training=True)
+    # x = Dense(256, activation='relu')(x)
+    # if dropout > 0:
+    #     x = Dropout(dropout)(x, training=True)
+    # phat = Dense(1, activation='sigmoid')(x)
+    # model = keras.Model(inputs, phat)
+    # model.compile(loss=keras.losses.BinaryCrossentropy(),
+    #               optimizer=keras.optimizers.Adam(),
+    #               metrics=[keras.metrics.binary_accuracy])
+    # return model
+
+
+def update_model(model: keras.Model, X, y):
+    X = np.array(X)
+    X = X.reshape([X.shape[0], X.shape[2]])
+    y = np.array(y)
+    y = y.reshape(-1)
+    model.fit(X, y, epochs=10)
+    return model
+
+
+def ad_onehot(ad):
+    ed_levels = ['Elementary', 'Middle', 'HS-grad', 'Undergraduate', 'Graduate']
+    ad_input = np.zeros(len(ed_levels))
+    if ad in ed_levels:
+        ad_input[ed_levels.index(ad)] = 1
+    return list(map(int, ad_input))  # cast np.array to vanilla list of integers
+    # ad_input = [0] * len(ed_levels)
+    # if ad in ed_levels:
+    #     ad_input[ed_levels.index(ad)] = 1
+    # return ad_input
+
+
+def select_ad(model: keras.Model, context, ad_inventory):  # Thompson sampling
+    selected_ad, selected_x, max_action_val = None, None, 0
+    for ad in ad_inventory:
+        ad_x = ad_onehot(ad)
+        x = np.array(context + ad_x).reshape([1, -1])
+        action_val_pred = model.predict(x)[0][0]
+        if action_val_pred >= max_action_val:
+            selected_ad, selected_x, max_action_val = ad, x, action_val_pred
+    return selected_ad, selected_x
+
+
+def generate_user(df_data: pd.DataFrame):
+    user = df_data.sample(1)
+    context = user.iloc[:, :-1].values.tolist()[0]
+    return user.to_dict(orient='records')[0], context
+
+
+def calculate_regret(user, ad_inventory, ad_click_probas, ad_selected):
+    this_p, max_p = 0, 0
+    for ad in ad_inventory:
+        p = ad_click_probas[ad][user['education']]
+        if ad == ad_selected:
+            this_p = p
+        if p > max_p:
+            max_p = p
+    regret = max_p - this_p
+    return regret
+
+
+ad_click_probas = get_ad_click_probas()
+df_cbandits = pd.DataFrame()
+dropout_levels = [0, 0.01, 0.05, 0.1, 0.2, 0.4]
+n_iter = 5000
+dropout_regret = []
+for d in dropout_levels:
+    print('Dropout: %.2f' % d)
+    np.random.seed(0)
+    n_context = df_data_.shape[1] - 1  # n features
+    n_ad_input = df_data_.education.nunique()  # n unique education values
+    model_ = get_model(n_input=n_context+n_ad_input, dropout=0.01)
+    X_, y_ = [], []
+    regret_vec, total_regret = [], 0
+    for i in range(n_iter):
+        if i % 20 == 0:
+            print("# of impressions: %d" % i)
+        user_, context_ = generate_user(df_data_)
+        ad_inventory_ = get_ad_inventory()
+        ad_, x_ = select_ad(model_, context_, ad_inventory_)
+        click = display_ad(ad_click_probas, user_, ad_)
+        regret_ = calculate_regret(user_, ad_inventory_, ad_click_probas, ad_)
+        total_regret += regret_
+        regret_vec.append(total_regret)
+        X_.append(x_)
+        y_.append(click)
+        if (i + 1) % 500 == 0:
+            print('Updating the model at iteration: %d' % (i + 1))
+            model_ = update_model(model_, X_, y_)
+            X_, y_ = [], []
+    # dropout_regret[dropout_levels.index(d)].append()
+    dropout_regret.append(regret_vec)
+    df_cbandits['dropout: '+str(d)] = regret_vec
+
+
+cols = ['b', 'g', 'c', 'm', 'k', 'y']
+for i in range(len(dropout_levels)):
+    plt.plot(
+        dropout_regret[i],
+        c=cols[i],
+        label='dropout: %.2f' % dropout_levels[i],
+        linewidth=1
+    )
+plt.grid(alpha=0.5)
+plt.legend(loc='best')
+plt.xlabel('# iterations')
+plt.ylabel('cumulative regret')
+plt.show()
+plt.clf()
 
 
 

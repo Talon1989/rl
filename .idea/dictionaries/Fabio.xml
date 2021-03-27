@@ -2,6 +2,7 @@
   <dictionary name="Fabio">
     <words>
       <w>bfgs</w>
+      <w>cbandits</w>
       <w>dashdot</w>
       <w>dashmap</w>
       <w>linewidth</w>
@@ -14,6 +15,7 @@
       <w>probas</w>
       <w>pyplot</w>
       <w>regularizer</w>
+      <w>relu</w>
       <w>rlambda</w>
       <w>savefig</w>
       <w>showlegend</w>

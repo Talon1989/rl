@@ -51,7 +51,7 @@ def thompson(p, n_iter=1000):
         betas[action][0] = betas[action][0] + R
         betas[action][1] = betas[action][1] + (1 - R)
         total_reward += R
-        average_rewards.append(total_reward / (i+1))
+        average_rewards.append(total_reward / (i + 1))
     return average_rewards, np.argmax(np.array(betas)[:, 0])
 
 

@@ -268,7 +268,7 @@ def apply_contextual_bandits():
             )
             #  Update the models with the latest batch of data
             if (i + 1) % 500 == 0:
-                print('Updating the model at iteration %d' % (i+1))
+                print('Updating the model at iteration %d' % (i + 1))
                 for ad in ad_options:
                     ad_models[ad].fit(X[ad], y[ad])
                 X = {ad: [] for ad in ad_options}
