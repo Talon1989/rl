@@ -101,7 +101,7 @@ def display_ad(ad_click_probas, user, ad):
 #  FUNCTION APPROXIMATION USING A NN
 
 
-def get_model(n_input, dropout):
+def get_model(n_input, dropout=0.1):
 
     inputs = keras.Input(shape=(n_input,))
 
@@ -200,7 +200,7 @@ for d in dropout_levels:
     np.random.seed(0)
     n_context = df_data_.shape[1] - 1  # n features
     n_ad_input = df_data_.education.nunique()  # n unique education values
-    model_ = get_model(n_input=n_context+n_ad_input, dropout=0.01)
+    model_ = get_model(n_input=n_context+n_ad_input, dropout=d)
     X_, y_ = [], []
     regret_vec, total_regret = [], 0
     for i in range(n_iter):

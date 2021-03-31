@@ -133,6 +133,7 @@ class DNN:
         self.o_W = self.random.normal(loc=0, scale=0.1, size=[self.n_hidden_2, Y.shape[1]])
 
         for i in range(self.n_iter):
+
             print('iteration n %d' % (i+1))
             indices = np.arange(X.shape[0])
             self.random.shuffle(indices)
