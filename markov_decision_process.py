@@ -3,6 +3,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
+def matrix_power(A: np.array, n):
+    if n <= 0:
+        return np.identity(A.shape[0])
+    current_A = np.copy(A)
+    for i in range(n-1):
+        current_A = np.dot(current_A, A)
+    return current_A
+
+
 m_ = 3
 m2_ = m_ ** 2
 q = np.zeros(m2_)
@@ -13,6 +22,7 @@ def get_P(m, p_up, p_down, p_left, p_right):
     m2 = m**2
     P = np.zeros([m2, m2])
     ix_map = {i + 1: (i // m, i % m) for i in range(m2)}
+    # print(ix_map)
     for i in range(m2):
         for j in range(m2):
             r1, c1 = ix_map[i + 1]
@@ -42,9 +52,15 @@ def get_P(m, p_up, p_down, p_left, p_right):
     return P
 
 
-P_ = get_P(3, 0.2, 0.3, 0.25, 0.25)
-Pn = np.linalg.matrix_power(P_, 1)
-result_ = np.matmul(q, Pn)
+P_ = get_P(m=3, p_up=0.2, p_down=0.3, p_left=0.25, p_right=0.25)
+Pn = matrix_power(P_, 10)  # Pn = np.linalg.matrix_power(P_, 1)
+result_ = np.dot(q, Pn)  # result_ = np.matmul(q, Pn)
+
+# visual operations
+result_matrix = result_.reshape([3, 3])
+last_row = np.copy(result_matrix[-1, :])
+result_matrix[-1, :] = result_matrix[0, :]
+result_matrix[0, :] = last_row
 
 
 
