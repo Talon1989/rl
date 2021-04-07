@@ -53,7 +53,7 @@ def get_P(m, p_up, p_down, p_left, p_right):
 
 
 P_ = get_P(m=3, p_up=0.2, p_down=0.3, p_left=0.25, p_right=0.25)
-Pn = matrix_power(P_, 10)  # Pn = np.linalg.matrix_power(P_, 1)
+Pn = matrix_power(P_, 1)  # Pn = np.linalg.matrix_power(P_, 1)
 result_ = np.dot(q, Pn)  # result_ = np.matmul(q, Pn)
 
 # visual operations
