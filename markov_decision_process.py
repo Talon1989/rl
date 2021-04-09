@@ -53,15 +53,32 @@ def get_P(m, p_up, p_down, p_left, p_right):
 
 
 P_ = get_P(m=3, p_up=0.2, p_down=0.3, p_left=0.25, p_right=0.25)
+#  ALERT ! MATRIX IS BEING ROTATED SUCH THAT COLS HAVE PROBABILITIES
+P_ = P_.T
 Pn = matrix_power(P_, 1)  # Pn = np.linalg.matrix_power(P_, 1)
-result_ = np.dot(q, Pn)  # result_ = np.matmul(q, Pn)
+result_ = np.dot(Pn, q)
+# result_ = np.dot(q, Pn)  # result_ = np.matmul(q, Pn)
 
 # visual operations
-result_matrix = result_.reshape([3, 3])
-last_row = np.copy(result_matrix[-1, :])
-result_matrix[-1, :] = result_matrix[0, :]
-result_matrix[0, :] = last_row
+# result_matrix = result_.reshape([3, 3])
+# last_row = np.copy(result_matrix[-1, :])
+# result_matrix[-1, :] = result_matrix[0, :]
+# result_matrix[0, :] = last_row
 
+
+# a sample path in an ergodic Markov chain
+def path_in_ergodic_markov_chain():
+    from scipy.stats import itemfreq
+    s = 4
+    n = 10 ** 6
+    visited = [s]
+    for t in range(n):
+        s = np.random.choice(m2_, p=P_[:, s])
+        visited.append(s)
+    return itemfreq(visited)
+
+
+num_visited = path_in_ergodic_markov_chain()
 
 
 
