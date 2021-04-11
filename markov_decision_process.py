@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats as stats
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -68,17 +69,22 @@ result_ = np.dot(Pn, q)
 
 # a sample path in an ergodic Markov chain
 def path_in_ergodic_markov_chain():
-    from scipy.stats import itemfreq
-    s = 4
-    n = 10 ** 6
+    np.random.seed(0)
+    s = 0
+    n = 10 ** 3
     visited = [s]
     for t in range(n):
-        s = np.random.choice(m2_, p=P_[:, s])
+        s = np.random.choice(m2_, p=P_[:, s])  # np.random.choice(3, p=[0.1, 0.5, 0.4])
         visited.append(s)
-    return itemfreq(visited)
+    # plt.plot(visited[-20:], c='blue', linewidth=1); plt.show(); plt.clf();
+    # return stats.itemfreq(visited)  # deprecated
+    return np.unique(visited, return_counts=True)
 
 
-num_visited = path_in_ergodic_markov_chain()
+# num_visited = np.vstack([path_in_ergodic_markov_chain()]).T
+
+
+#  MARKOV REWARD PROCESS
 
 
 
