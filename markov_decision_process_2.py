@@ -8,6 +8,7 @@ import markov_decision_process
 m = 3
 m2 = m ** 2
 P = np.zeros([m2 + 1, m2 + 1])
+#  cols = from, rows = to
 P[:m2, :m2] = markov_decision_process.get_P(3, 0.2, 0.3, 0.25, 0.25).T
 for i in range(m2):
     P[m2, i] = P[i, i]
