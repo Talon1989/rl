@@ -52,10 +52,12 @@ def estimate_state_values(P, m2, threshold):
         max_change = 0
         for s in range(m2 + 1):
             v_new = 0
+            print(v)
             for s_next in range(m2 + 1):
                 r = 1 * (s_next != terminal_state)  # 1 for any except last row (absorption state)
                 v_new += P[s, s_next] * (r + v[s_next])
             max_change = max(max_change, np.abs(v[s] - v_new))
+            # print(max_change)
             v[s] = v_new
     return np.round(v, 2)
 
