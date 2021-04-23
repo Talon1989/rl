@@ -48,14 +48,82 @@ def episode_generation():
     return cumulative_reward, total_actions
 
 
+def cart_pole():
+    env = gym.make('CartPole-v0')
+    env.seed(0)
+    #  box = continuous
+    print(env.observation_space)
+    print(env.reset())  # [position, velocity, pole angle, pole velocity at tip]
+    print('max values of state space: %s' % env.observation_space.high)
+    print('min values of state space: %s' % env.observation_space.low)
+    print()
+    print(env.action_space)  # [0=push left, 1=push right]
+    n_episodes, n_timesteps = 100, 50
+    for episode in range(n_episodes):
+        cumulative_reward = 0
+        state = env.reset()
+        for t in range(n_timesteps):
+            env.render()
+            random_action = env.action_space.sample()
+            next_state, reward, absorbing_state, info = env.step(random_action)
+            cumulative_reward += reward
+            if absorbing_state:
+                break
+        if episode % 10 == 0:
+            print('Episode %d, return %f' % (episode, cumulative_reward))
+    env.close()
 
 
+def atari_tennis(recording=False):
+    env = gym.make('Tennis-v0')
+    if recording:
+        env = gym.wrappers.Monitor(env, 'recording', force=True)
+        env.reset()
+        for _ in range(5000):
+            env.render()
+            action = env.action_space.sample()
+            next_state, reward, absorbing_state, info = env.step(action)
+            if absorbing_state:
+                break
+        env.close()
+        return
+    n_episodes, n_timesteps = 100, 50
+    for episode in range(n_episodes):
+        cumulative_reward = 0
+        env.reset()
+        for t in range(n_timesteps):
+            env.render()
+            random_action = env.action_space.sample()
+            next_state, reward, absorbing_state, info = env.step(random_action)
+            cumulative_reward += reward
+            if absorbing_state:
+                break
+        if episode % 10 == 0:
+            print('Episode %d, return %f' % (episode, cumulative_reward))
+    env.close()
 
 
+def recording_test():
+    env = gym.make('Tennis-v0')
+    env = gym.wrappers.Monitor(env, 'recording', force=True)
+    n_timesteps = 5000
+    cumulative_reward = 0
+    env.reset()
+    for t in range(n_timesteps):
+        env.render()
+        random_action = env.action_space.sample()
+        next_state, reward, absorbing_state, info = env.step(random_action)
+        cumulative_reward += reward
+        if absorbing_state:
+            break
+    env.close()
 
 
+atari_tennis(recording=True)
+# recording_test()
 
-
+# env = gym.make('Pong-v0')
+# max_iterations = env._max_episode_steps
 
 
 
