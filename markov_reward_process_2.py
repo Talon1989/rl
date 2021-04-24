@@ -42,7 +42,7 @@ def estimate_state_values(P, m2, threshold):
     return np.round(v, 2)
 
 
-estimations = estimate_state_values(P, m2, 0.01)
+# estimations = estimate_state_values(P, m2, 0.01)
 
 
 
