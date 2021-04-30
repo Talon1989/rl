@@ -119,7 +119,7 @@ def recording_test():
     env.close()
 
 
-atari_tennis(recording=True)
+# atari_tennis(recording=True)
 # recording_test()
 
 # env = gym.make('Pong-v0')
