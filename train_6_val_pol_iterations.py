@@ -21,7 +21,8 @@ def value_iteration(threshold=1e-20, gamma=0.99):
                 np.sum([
                     (r + gamma * prev_state_values[s_]) * p
                     for p, s_, r, _ in P[s][a]
-                ]) for a in range(n_actions)
+                ])
+                for a in range(n_actions)
             ]
             state_values[s] = max(q_values)
         if np.sum(np.abs(prev_state_values - state_values)) < threshold:
@@ -42,7 +43,7 @@ def value_iteration(threshold=1e-20, gamma=0.99):
     return state_values, best_policy
 
 
-# s, policy_ = value_iteration()
+s_, policy_ = value_iteration()
 
 
 def policy_iteration(threshold=1e-20, gamma=0.99):
