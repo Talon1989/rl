@@ -101,10 +101,86 @@ def policy_iteration():
     return state_values, policy
 
 
-state_star, policy_star = value_iteration()
-state_star_2, policy_star_2 = policy_iteration()
+# state_star, policy_star = value_iteration()
+# state_star_2, policy_star_2 = policy_iteration()
 
 
+def pol_iter():
+    threshold = 1e-20
+    gamma = 0.99
+    policy = np.zeros(n_states)
+    counter = 0
+    while True:
+        state_values = np.zeros(n_states)
+        while True:
+            old_state_values = state_values.copy()
+            for s in range(n_states):
+                state_values[s] = np.sum([
+                    (r + gamma * old_state_values[s_]) * p
+                    for p, s_, r, _ in P[s][policy[s]]
+                ])
+            if np.sum(np.abs(old_state_values - state_values)) <= threshold:
+                break
+        old_policy = policy.copy()
+        for s in range(n_states):
+            q_func = [
+                np.sum([
+                    (r + gamma * state_values[s_]) * p
+                    for p, s_, r, _ in P[s][a]
+                ]) for a in range(n_actions)
+            ]
+            policy[s] = np.argmax(q_func)
+        if (old_policy == policy).all():
+            print(counter)
+            break
+        counter += 1
+    return policy
+
+
+def value_iter():
+    threshold = 1e-20
+    gamma = 0.99
+    state_values = np.zeros(n_states)
+    counter = 0
+    while True:
+        old_state_values = state_values.copy()
+        for s in range(n_states):
+            q_func = [
+                np.sum([
+                    (r + gamma * old_state_values[s_]) * p
+                    for p, s_, r, _ in P[s][a]
+                ]) for a in range(n_actions)
+            ]
+            state_values[s] = np.max(q_func)
+        if counter <= 4:
+            print(state_values)
+        counter += 1
+        if np.sum(np.abs(old_state_values - state_values)) <= threshold:
+            policy = np.zeros(n_states)
+            for s in range(n_states):
+                q_func = [
+                    np.sum([
+                        (r + gamma * old_state_values[s_]) * p
+                        for p, s_, r, _ in P[s][a]
+                    ]) for a in range(n_actions)
+                ]
+                policy[s] = np.argmax(q_func)
+            break
+    return policy
+
+
+def e_greedy(n_iter=10_000, epsilon=0.1):
+    action_probas = np.array([0.2, 0.6, 0.4])
+    q, n = np.zeros(3), np.zeros(3)
+    for i in range(n_iter):
+        if np.random.uniform(0, 1) > epsilon and i > 0:
+            action = np.argmax(q)
+        else:
+            action = np.random.randint(3)
+        reward = np.random.binomial(1, action_probas[action])
+        n[action] += 1
+        q[action] += reward / n[action]
+    return q
 
 
 
