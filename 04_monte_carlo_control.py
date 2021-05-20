@@ -9,7 +9,7 @@ env = gym.make('Blackjack-v0')
 env.seed(0)
 
 
-def epsilon_greedy_policy(q, state, e=0.5):
+def epsilon_greedy_policy(q, state, e=0.1):
     if random.uniform(0, 1) < e:
         return env.action_space.sample()
     else:
@@ -18,7 +18,7 @@ def epsilon_greedy_policy(q, state, e=0.5):
         #     key=lambda a: q[(state, a)]
         # )
         return np.argmax(
-            q[(state, a)] for a in range(env.action_space.n)
+            [q[(state, a)] for a in range(env.action_space.n)]
         )
 
 
@@ -47,7 +47,7 @@ def control_on_policy(n_iter=100_000):
         state_action_pairs = [(s, a) for s, a, _ in episode]
         rewards = [r for _, _, r in episode]
         for t, (state, action, _) in enumerate(episode):
-            if not (state, action) in state_action_pairs[0:t]:  # using first visit
+            if not (state, action) in state_action_pairs[0:t]:
                 R = sum(rewards[t:])
                 total_return_[(state, action)] += R
                 N_[(state, action)] += 1
