@@ -160,18 +160,32 @@ class DNN:
         return self
 
 
-dnn = DNN(eta=0.001, n_iter=1000, batch_size=20)
+# dnn = DNN(eta=0.001, n_iter=1000, batch_size=20)
+# dnn.fit(X_train, y_train, l2=0.0)
+# predictions = dnn.predict(X_test)
+# print(
+#     np.sum(np.argmax(predictions, axis=1) == y_test) / y_test.shape[0]
+# )
+
+
+iris = pd.read_csv('data/iris.csv')
+ys = LabelEncoder().fit_transform(iris.iloc[:, -1].values)
+X_train, X_test, y_train, y_test = train_test_split(
+    iris.iloc[:, 0:-1].values,
+    ys,
+    train_size=0.5,
+    stratify=ys
+)
+dnn = DNN(eta=0.0001, n_iter=2000, batch_size=5)
 dnn.fit(X_train, y_train, l2=0.0)
 predictions = dnn.predict(X_test)
 print(
     np.sum(np.argmax(predictions, axis=1) == y_test) / y_test.shape[0]
 )
-# predictions = dnn.predict(X_train)
+# print(y_test[20:50])
 # print(
-#     np.sum(np.argmax(predictions, axis=1) == y_train) / y_train.shape[0]
+#     np.argmax(dnn.predict(X_test[20:50]), axis=1)
 # )
-
-
 
 
 
