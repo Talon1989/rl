@@ -5,6 +5,7 @@
       <w>cbandits</w>
       <w>dashdot</w>
       <w>dashmap</w>
+      <w>denom</w>
       <w>diagonalization</w>
       <w>itemfreq</w>
       <w>linewidth</w>
@@ -14,6 +15,7 @@
       <w>onehot</w>
       <w>perc</w>
       <w>plotly</w>
+      <w>preds</w>
       <w>proba</w>
       <w>probas</w>
       <w>pyplot</w>
