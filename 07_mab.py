@@ -114,20 +114,42 @@ def UCB(i):
     return np.argmax(ucb)
 
 
-for i in range(n_rounds):
-    a = UCB(i)
-    _, r, _, _ = env.step(a)
-    count[a] += 1
-    sum_rewards[a] += r
-    q[a] = sum_rewards[a] / count[a]
+# for i in range(n_rounds):
+#     a = UCB(i)
+#     _, r, _, _ = env.step(a)
+#     count[a] += 1
+#     sum_rewards[a] += r
+#     q[a] = sum_rewards[a] / count[a]
 
 
-#  Thompson sampling
+#  Thompson sampling  ############################
 
 
+count = np.zeros(n_actions)
+sum_rewards = np.zeros(n_actions)
+q = np.zeros(n_actions)
+n_rounds = 10_000
 
 
+def thompson():
+    beta = np.ones([n_actions, 2])
+    for _ in range(n_rounds):
+        action = np.argmax([
+            np.random.beta(
+                [beta[a, 0] for a in range(n_actions)],
+                [beta[a, 1] for a in range(n_actions)]
+            )
+        ])
+        _, r, _, _ = env.step(action)
+        beta[action, 0] += r
+        beta[action, 1] += 1 - r
+        # count[action] += 1
+        # sum_rewards[action] += r
+    # return sum_rewards / count
+    return beta[:, 0] / (beta[:, 0] + beta[:, 1])
 
+
+q = thompson()
 
 
 
