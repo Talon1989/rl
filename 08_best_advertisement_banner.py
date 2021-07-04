@@ -32,7 +32,7 @@ def e_greedy(e=0.1):
 
 
 for i in range(n_iter):
-    banner = e_greedy(0.1)
+    banner = e_greedy(0.5)
     r = df.values[i, banner]
     sum_rewards[banner] += r
     count[banner] += 1
@@ -40,7 +40,7 @@ for i in range(n_iter):
     selected_banners.append(banner)
 
 
-print('best banner is banner n %d' % (np.argmax(q)))
+print('best banner is banner n %d' % np.argmax(q))
 
 
 ax = sns.countplot(selected_banners)
