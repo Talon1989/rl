@@ -41,8 +41,23 @@ class NN:
         o_A = self.activation(o_Z)
         return h_Z, h_A, o_Z, o_A
 
-    def predict(self, X):
+    def predict(self, X, softmax=False):
         _, _, o_Z, _ = self.forward(X)
+        if softmax:
+            # denom_matrix = np.sum(  # CANNOT USE 2D TENSOR WITH np.random.choice so had to rely on loop append
+            #     np.exp(o_Z), axis=1
+            # )
+            predictions = []
+            for y in range(o_Z.shape[0]):
+                predictions.append(
+                    np.random.choice(
+                        np.arange(0, o_Z.shape[1]),
+                        p=[np.exp(i) / np.sum([
+                            np.exp(u) for u in o_Z[y, :]
+                        ]) for i in o_Z[y, :]]
+                    )
+                )
+            return np.array(predictions)
         return o_Z
 
     def fit(self, X, y, l2=0.):
@@ -75,16 +90,25 @@ class NN:
         return self
 
 
+iris = pd.read_csv('data/iris.csv')
+X_ = iris.iloc[:, 0:-1].values
+y_ = LabelEncoder().fit_transform(iris.iloc[:, -1].values)
 X_train, X_test, y_train, y_test = train_test_split(
     X_, y_, train_size=0.5, stratify=y_
 )
 
-# nn = NN(eta=0.001, n_iter=200, batch_size=10)
-# nn.fit(X_train, y_train, l2=0.)
-# predictions = nn.predict(X_test)
-# print(
-#     np.sum(np.argmax(predictions, axis=1) == y_test) / y_test.shape[0]
-# )
+nn = NN(eta=0.01, n_iter=500, batch_size=10)
+nn.fit(X_train, y_train, l2=0.)
+soft = True
+predictions = nn.predict(X_test, softmax=soft)
+if soft:
+    print(
+        np.sum(predictions == y_test) / y_test.shape[0]
+    )
+else:
+    print(
+        np.sum(np.argmax(predictions, axis=1) == y_test) / y_test.shape[0]
+    )
 
 
 class DNN:
@@ -168,20 +192,26 @@ class DNN:
 # )
 
 
-iris = pd.read_csv('data/iris.csv')
-ys = LabelEncoder().fit_transform(iris.iloc[:, -1].values)
-X_train, X_test, y_train, y_test = train_test_split(
-    iris.iloc[:, 0:-1].values,
-    ys,
-    train_size=0.5,
-    stratify=ys
-)
-dnn = DNN(eta=0.0001, n_iter=2000, batch_size=5)
-dnn.fit(X_train, y_train, l2=0.0)
-predictions = dnn.predict(X_test)
-print(
-    np.sum(np.argmax(predictions, axis=1) == y_test) / y_test.shape[0]
-)
+
+
+# iris = pd.read_csv('data/iris.csv')
+# ys = LabelEncoder().fit_transform(iris.iloc[:, -1].values)
+# X_train, X_test, y_train, y_test = train_test_split(
+#     iris.iloc[:, 0:-1].values,
+#     ys,
+#     train_size=0.5,
+#     stratify=ys
+# )
+# dnn = DNN(eta=0.0001, n_iter=2000, batch_size=5)
+# dnn.fit(X_train, y_train, l2=0.0)
+# predictions = dnn.predict(X_test)
+# print(
+#     np.sum(np.argmax(predictions, axis=1) == y_test) / y_test.shape[0]
+# )
+
+
+
+
 # print(y_test[20:50])
 # print(
 #     np.argmax(dnn.predict(X_test[20:50]), axis=1)
