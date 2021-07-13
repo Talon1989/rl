@@ -2,20 +2,44 @@ import tensorflow as tf
 import keras
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 
 
+#  KERAS SEQUENTIAL MODEL
 
 
+# model = keras.models.Sequential()
+# model.add(keras.layers.Dense(units=13, input_dim=7, activation='relu'))
+# model.add(keras.layers.Dense(units=7, activation='relu'))
+# model.add(keras.layers.Dense(units=1, activation='sigmoid'))
 
 
+# model = keras.models.Sequential([
+#     keras.layers.Dense(units=13, input_dim=7, activation='relu'),
+#     keras.layers.Dense(units=7, activation='relu'),
+#     keras.layers.Dense(units=1, activation='sigmoid')
+# ])
 
 
+#  KERAS FUNCTIONAL MODEL
 
 
+# input_ = keras.Input(shape=(2, ))
+# layer1 = keras.layers.Dense(units=10, activation='relu')(input_)
+# layer2 = keras.layers.Dense(units=10, activation='relu')(layer1)
+# output_ = keras.layers.Dense(units=1, activation='sigmoid')(layer2)
+# model = keras.Model(input_, output_)
+# model.compile(
+#     loss='binary_crossentropy', optimizer='sgd', metrics=['accuracy']
+# )
 
 
+#  MNIST DIGIT CLASSIFICATION USING TENSORFLOW  ###########################
 
 
+mnist = tf.keras.datasets.mnist
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
 
 
 
