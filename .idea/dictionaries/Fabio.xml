@@ -1,6 +1,7 @@
 <component name="ProjectDictionaryState">
   <dictionary name="Fabio">
     <words>
+      <w>amax</w>
       <w>bfgs</w>
       <w>cbandits</w>
       <w>crossentropy</w>
@@ -12,6 +13,7 @@
       <w>linewidth</w>
       <w>longdash</w>
       <w>maxiter</w>
+      <w>minibatch</w>
       <w>mnist</w>
       <w>onehot</w>
       <w>perc</w>

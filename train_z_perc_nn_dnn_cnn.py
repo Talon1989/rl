@@ -283,9 +283,12 @@ cnn.compile(
 cnn.fit(X_train, y_train, batch_size=10, epochs=2)
 
 
-
-
-
+print('predicting first train data')
+print(
+    np.argmax(
+        cnn.predict(X_train[0:1])[0]
+    )
+)
 
 
 

@@ -44,9 +44,8 @@ def sarsa():
     return pd.DataFrame(q.items(), columns=['(s, a)', 'value'])
 
 
-def q_learning():
-    alpha, gamma = 0.85, 0.95
-    n_episodes = 500_000
+def q_learning(n_episodes=500_000):
+    alpha, gamma = 0.30, 0.99
     for i in range(n_episodes):
         s = env.reset()
         while True:
@@ -72,7 +71,7 @@ def q_learning():
 
 
 # data = sarsa()
-data = q_learning()
+data = q_learning(10000)
 
 
 # d = pd.DataFrame({'a': a, 'b': b})
