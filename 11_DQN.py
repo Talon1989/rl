@@ -121,8 +121,10 @@ for i in range(n_episodes):
         if done:
             print('Episode: %d, Return: %f' % (i, return_))
             break
-        if len(dqn.replay_buffer) > batch_size and i > 5:
+        if len(dqn.replay_buffer) > batch_size:
             dqn.train(batch_size=batch_size)
+    # if len(dqn.replay_buffer) > batch_size:
+    #     dqn.train(batch_size=batch_size)
 
 
 
