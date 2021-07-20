@@ -24,6 +24,7 @@ def func_2(word):
 
 
 func_2('banana')
+func_2('potato')
 
 
 
