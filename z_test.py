@@ -2,6 +2,7 @@ import numpy as np
 import keras
 import tensorflow
 import matplotlib.pyplot as plt
+import gym
 
 print('working')
 
@@ -26,6 +27,8 @@ def func_2(word):
 func_2('banana')
 func_2('potato')
 
+
+env = gym.make('MsPacman-v0')
 
 
 

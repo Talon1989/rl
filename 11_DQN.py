@@ -64,7 +64,7 @@ class DQN:
         return model
 
     def store_transition(self, s, a, r, s_, done):
-        self.replay_buffer.append((s, a, r, s_, done))
+        self.replay_buffer.append([s, a, r, s_, done])
 
     def epsilon_greedy(self, s):
         if np.random.uniform(0, 1) < self.epsilon:
@@ -99,7 +99,8 @@ class DQN:
 
 n_episodes = 500
 n_timesteps = 20_000
-batch_size = 8
+# batch_size = 8
+batch_size = 32
 n_screens = 4
 dqn = DQN(state_size=n_states, action_size=n_actions)
 done = False
@@ -107,7 +108,8 @@ time_step = 0
 for i in range(n_episodes):
     return_ = 0
     s = preprocess_state(env.reset())
-    for t in range(n_timesteps):
+    # for t in range(n_timesteps):
+    while True:
         env.render()
         time_step += 1
         if time_step % dqn.update_rate == 0:
@@ -121,10 +123,11 @@ for i in range(n_episodes):
         if done:
             print('Episode: %d, Return: %f' % (i, return_))
             break
-        if len(dqn.replay_buffer) > batch_size:
-            dqn.train(batch_size=batch_size)
-    # if len(dqn.replay_buffer) > batch_size:
-    #     dqn.train(batch_size=batch_size)
+        # if len(dqn.replay_buffer) > batch_size:
+        #     dqn.train(batch_size=batch_size)
+    if len(dqn.replay_buffer) > batch_size:
+        print('training dqn')
+        dqn.train(batch_size=batch_size)
 
 
 
