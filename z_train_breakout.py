@@ -139,9 +139,13 @@ def update_main_network():
 def update_target_network():
     model_target.set_weights(model_main.get_weights())
     print(
-        'running reward: %.2f at episode %d, frame count %d'
-        % (running_reward, episode_count, frame_count)
+        'latest reward: %.2f at episode %d, frame count %d'
+        % (rewards_history[-1], episode_count, frame_count)
     )
+    # print(
+    #     'running reward: %.2f at episode %d, frame count %d'
+    #     % (running_reward, episode_count, frame_count)
+    # )
 
 
 while True:
@@ -152,8 +156,8 @@ while True:
     for t in range(1, max_steps_per_episode):
 
         env.render()
-        if frame_count % 1000 == 0:
-            print('Episode %d, frame %d' % (episode_count, frame_count))
+        # if frame_count % 1000 == 0:
+        #     print('Episode %d, frame %d' % (episode_count, frame_count))
 
         frame_count += 1
         a = e_greedy(frame_count, s)
@@ -201,8 +205,8 @@ while True:
         break
 
 
-
-
+#  save model_main weights
+model_main.save_weights('data/atari_breakout')
 
 
 
