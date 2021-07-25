@@ -71,7 +71,7 @@ def build_model_og(input_shape, action_space):
     # Output Layer with # of actions: 2 nodes (left, right)
     X = Dense(action_space, activation="linear", kernel_initializer='he_uniform')(X)
 
-    model = Model(inputs = X_input, outputs = X, name='CartPole DQN model')
+    model = Model(inputs = X_input, outputs = X)
     model.compile(loss="mse", optimizer=RMSprop(lr=0.00025, rho=0.95, epsilon=0.01), metrics=["accuracy"])
 
     model.summary()
@@ -85,28 +85,29 @@ class DQNAgent:
         self.env = env
         self.n_states = n_states
         self.n_actions = n_actions
-        self.n_episodes = 1_000
+        self.n_episodes = 10_000
         self.memory = deque(maxlen=2_000)
         self.gamma = 0.95
         self.epsilon = 1.
         self.epsilon_min = 0.001
-        self.epsilon_decay = 0.999
+        self.epsilon_decay = 9_999 / 10_000
         self.batch_size = 64
         self.train_start = 1_000
-        self.model = build_model(input_shape=(self.n_states,), n_actions=self.n_actions)
-        # self.model = build_model_og(
-        #     input_shape=(self.n_states,), action_space=self.n_actions
-        # )
+        # self.model = build_model(input_shape=(self.n_states,), n_actions=self.n_actions)
+        self.model = build_model_og(
+            input_shape=(self.n_states,), action_space=self.n_actions
+        )
 
     def remember(self, s, a, r, s_, done):
         self.memory.append((s, a, r, s_, done))
         if len(self.memory) > self.train_start:
             if self.epsilon > self.epsilon_min:
-                self.epsilon = self.epsilon * self.epsilon_decay
+                self.epsilon *= self.epsilon_decay
 
     def e_greedy(self, s):
-        if np.random.uniform(0, 1) < self.epsilon:
-            return np.random.randint(0, self.n_actions)
+        if np.random.uniform(0, 1) <= self.epsilon:
+            # return np.random.randint(0, self.n_actions)
+            return random.randrange(self.n_actions)
         else:
             return np.argmax(self.model.predict(s))
 
@@ -129,8 +130,8 @@ class DQNAgent:
             if done[i]:
                 target[i][a[i]] = r[i]
             else:
-                target[i][a[i]] = r[i] + self.gamma * np.amax(target_[i])
-        self.model.fit(s, target, batch_size=self.batch_size, verbose=False)
+                target[i][a[i]] = r[i] + self.gamma * (np.amax(target_[i]))
+        self.model.fit(s, target, batch_size=self.batch_size, verbose=0)
 
     def load(self, name):
         self.model = keras.models.load_model(name)
@@ -139,6 +140,7 @@ class DQNAgent:
         self.model.save(name)
 
     def run(self):
+        counter = 0
         for e in range(self.n_episodes):
             s = self.env.reset()
             s = np.reshape(s, [1, self.n_states])
@@ -149,39 +151,43 @@ class DQNAgent:
                 a = self.e_greedy(s)
                 s_, r, done, _ = self.env.step(a)
                 s_ = np.reshape(s_, [1, self.n_states])
-                if not done and i == self.env._max_episode_steps-1:
-                    pass
+                if not done or i == self.env._max_episode_steps-1:
+                    r = r
                 else:
                     r = -100
                 self.remember(s, a, r, s_, done)
                 s = s_
                 i += 1
+                if i == 500:
+                    counter += 1
+                    print('%d times solved' % counter)
                 if done:
                     print(
                         'episode: %d/%d, score: %d, epsilon:%f'
                         % (e, self.n_episodes, i, self.epsilon)
                     )
-                    if i == 500:
+                    if counter == 10:
                         print('saving trained model')
-                        self.save('data/cartpole-dqn.h5')
+                        self.save('data/cartpole_custom-dqn.h5')
+                        return
                     break
+
                 self.train()
 
     def test(self):
-        self.load('data/cartpole-dqn.h5')
+        self.load('data/cartpole_custom-dqn.h5')
         for e in range(self.n_episodes):
-            s = self.env.reset()
-            s = np.reshape(s, [1, self.n_states])
-            done = False
             i = 0
+            s = self.env.reset()
             while True:
+                s = np.reshape(s, [1, self.n_states])
                 self.env.render()
                 a = np.argmax(self.model.predict(s))
                 s_, r, done, _ = self.env.step(a)
-                s = np.reshape(s_, [1, self.n_states])
+                s = s_
                 i += 1
                 if done:
-                    print("episode: {}/{}, score: {}".format(e, self.n_states, i))
+                    print("episode: {}/{}, score: {}".format(e, self.n_episodes, i))
                     break
 
 
@@ -189,5 +195,5 @@ environment = gym.make('CartPole-v1')
 n_states = environment.observation_space.shape[0]
 n_actions = environment.action_space.n
 agent = DQNAgent(environment, n_states, n_actions)
-agent.run()
-
+# agent.run()
+agent.test()
