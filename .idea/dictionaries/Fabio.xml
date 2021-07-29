@@ -5,11 +5,14 @@
       <w>bfgs</w>
       <w>cartpole</w>
       <w>cbandits</w>
+      <w>cntr</w>
       <w>crossentropy</w>
       <w>dashdot</w>
       <w>dashmap</w>
       <w>denom</w>
       <w>diagonalization</w>
+      <w>dones</w>
+      <w>dtype</w>
       <w>frameskip</w>
       <w>itemfreq</w>
       <w>linewidth</w>

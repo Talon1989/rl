@@ -4,6 +4,7 @@ from tensorflow import keras
 import tensorflow
 from collections import deque
 import random
+import matplotlib.pyplot as plt
 
 
 # env = gym.make('CartPole-v1')  # r=1 for each step where it doesn't fall
@@ -37,15 +38,17 @@ import random
 def build_model(input_shape, n_actions):
     model = keras.models.Sequential([
         keras.layers.Dense(
-            units=512, activation='relu', kernel_initializer='he_uniform', input_shape=input_shape
+            units=512, activation='relu',
+            input_shape=input_shape
         ),
-        keras.layers.Dense(units=256, activation='relu', kernel_initializer='he_uniform'),
-        keras.layers.Dense(units=64, activation='relu', kernel_initializer='he_uniform'),
-        keras.layers.Dense(units=n_actions, activation='linear', kernel_initializer='he_uniform')
+        keras.layers.Dense(units=256, activation='relu'),
+        keras.layers.Dense(units=64, activation='relu'),
+        keras.layers.Dense(units=n_actions, activation='linear')
     ])
     model.compile(
         loss='mse',
         optimizer=keras.optimizers.RMSprop(lr=0.00025, rho=0.95, epsilon=0.01),
+        # optimizer=keras.optimizers.Adam(),
         metrics=['accuracy']
     )
     print(model.summary())
@@ -85,7 +88,7 @@ class DQNAgent:
         self.env = env
         self.n_states = n_states
         self.n_actions = n_actions
-        self.n_episodes = 10_000
+        self.n_episodes = 100_000
         self.memory = deque(maxlen=2_000)
         self.gamma = 0.95
         self.epsilon = 1.
@@ -140,6 +143,7 @@ class DQNAgent:
         self.model.save(name)
 
     def run(self):
+        reward_memory = []
         counter = 0
         for e in range(self.n_episodes):
             s = self.env.reset()
@@ -161,18 +165,27 @@ class DQNAgent:
                 if i == 500:
                     counter += 1
                     print('%d times solved' % counter)
+                else:
+                    counter = 0
                 if done:
+                    reward_memory.append(i)
                     print(
                         'episode: %d/%d, score: %d, epsilon:%f'
                         % (e, self.n_episodes, i, self.epsilon)
                     )
-                    if counter == 10:
-                        print('saving trained model')
+                    if counter == 5:
+                        print('Problem solved 5 times in a row\nSaving trained model')
                         self.save('data/cartpole_custom-dqn.h5')
                         return
                     break
 
                 self.train()
+        plt.plot(reward_memory, c='b')
+        plt.title('Reward history')
+        plt.xlabel('iterations')
+        plt.ylabel('reward')
+        plt.show()
+        plt.clf()
 
     def test(self):
         self.load('data/cartpole_custom-dqn.h5')
@@ -195,5 +208,5 @@ environment = gym.make('CartPole-v1')
 n_states = environment.observation_space.shape[0]
 n_actions = environment.action_space.n
 agent = DQNAgent(environment, n_states, n_actions)
-# agent.run()
-agent.test()
+agent.run()
+# agent.test()
