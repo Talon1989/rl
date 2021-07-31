@@ -13,10 +13,12 @@
       <w>diagonalization</w>
       <w>dones</w>
       <w>dtype</w>
+      <w>fname</w>
       <w>frameskip</w>
       <w>itemfreq</w>
       <w>linewidth</w>
       <w>longdash</w>
+      <w>lunarlander</w>
       <w>maxiter</w>
       <w>minibatch</w>
       <w>mnist</w>

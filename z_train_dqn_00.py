@@ -1,6 +1,8 @@
+import gym
 import numpy as np
 import pandas as pd
 from tensorflow import keras
+from data.utils import plot_learning_curve
 
 
 def onehot(y):
@@ -40,10 +42,111 @@ class ReplayBuffer:
             self.action_memory[index] = a
         self.mem_cntr += 1
 
+    def sample_buffer(self, batch_size):  # retrieves list of transition, not single sample
+        max_mem = min(self.mem_cntr, self.mem_size)
+        batch = np.random.choice(max_mem, batch_size)
+        s = self.state_memory[batch]
+        a = self.action_memory[batch]
+        r = self.reward_memory[batch]
+        s_ = self.new_state_memory[batch]
+        terminals = self.terminal_memory[batch]
+        return s, a, r, s_, terminals
+
+
+def build_dqn(alpha, n_actions, input_dims, h1_dims, h2_dims):
+    model = keras.models.Sequential([
+        keras.layers.Dense(units=h1_dims, input_shape=(input_dims, ), activation='relu'),
+        keras.layers.Dense(units=h2_dims, activation='relu'),
+        keras.layers.Dense(units=n_actions)
+    ])
+    model.compile(optimizer=keras.optimizers.Adam(lr=alpha), loss='mse')
+    return model
+
+
+class Agent:
+
+    def __init__(self, alpha, gamma, n_action, epsilon, batch_size,
+                 input_dims, epsilon_dec=999/1000, epsilon_min=1/100,
+                 mem_size=1_000_000, fname='z_train_dqn_00_model.h5'):
+        self.alpha = alpha
+        self.gamma = gamma
+        self.n_actions = n_action
+        self.action_space = np.arange(self.n_actions)  ##################
+        self.epsilon = epsilon
+        self.batch_size = batch_size
+        self.epsilon_dec = epsilon_dec
+        self.epsilon_min = epsilon_min
+        self.model_file = 'data/' + fname
+        self.memory = ReplayBuffer(mem_size, input_dims, n_action, classification=True)
+        self.q_eval = build_dqn(alpha, n_action, input_dims, 256, 256)
+
+    def remember(self, s, a, r, s_, done):
+        self.memory.store_transition(s, a, r, s_, done)
+
+    def choose_action(self, s):
+        s = s[np.newaxis, :]
+        if np.random.uniform(0, 1) < self.epsilon:
+            return np.random.randint(0, self.n_actions)
+        else:
+            return np.argmax(self.q_eval.predict(s))
+
+    def learn(self):
+        if self.memory.mem_cntr < self.batch_size:
+            return
+        s, a, r, s_, done = self.memory.sample_buffer(self.batch_size)
+        action_values = np.array([i for i in range(self.n_actions)], dtype=np.int8)
+        action_indices = np.dot(a, action_values)
+        q_eval = self.q_eval.predict(s)
+        q_next = self.q_eval.predict(s_)
+        q_target = q_eval.copy()
+        batch_index = np.arange(self.batch_size, dtype=np.int32)
+        q_target[batch_index, action_indices] = r + self.gamma * np.max(q_next, axis=1) * done
+        self.q_eval.fit(s, q_target, verbose=False)
+        self.epsilon = self.epsilon * self.epsilon_dec if self.epsilon > self.epsilon_min else self.epsilon_min
+
+    def save_model(self):
+        self.q_eval.save(self.model_file)
+
+    def load_model(self):
+        self.q_eval = keras.models.load_model(self.model_file)
+
 
 # flowers = pd.read_csv('data/iris.csv').iloc[:, -1].values
 # flowers = onehot(flowers)
 
+
+env = gym.make('LunarLander-v2')
+n_games = 500
+agent = Agent(
+    alpha=0.0005, gamma=0.99, n_action=env.action_space.n,
+    epsilon=1., batch_size=64, input_dims=8,
+)
+# agent.load_model()
+scores = []
+eps_history = []
+for i in range(n_games):
+    score = 0
+    s = env.reset()
+    while True:
+        a = agent.choose_action(s)
+        s_, r, done, _ = env.step(a)
+        score += r
+        agent.remember(s, a, r, s_, done)
+        s = s_
+        agent.learn()
+        if done:
+            break
+    eps_history.append(agent.epsilon)
+    scores.append(score)
+    avg_score = np.float(np.mean(scores[max(0, i-100): i+1]))
+    print(
+        'episode %d, score %.2f, avg score %.2f' % (i, score, avg_score)
+    )
+    if i % 100 == 0 and i > 0:
+        agent.save_model()
+
+x = [i+1 for i in range(n_games)]
+plot_learning_curve(x, scores, eps_history, filename='data/lunarlander.png')
 
 
 
