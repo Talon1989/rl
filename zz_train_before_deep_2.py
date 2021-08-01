@@ -1,6 +1,8 @@
 import numpy as np
 import gym
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 
 
 env = gym.make('FrozenLake-v0')
@@ -137,7 +139,89 @@ def mab(n_iter=10_000):
     return q
 
 
-mab = mab()
+# mab = mab()
+
+
+##################################################
+
+
+np.random.seed(1)
+
+
+class NN:  # hardcoded for classification
+
+    #  TODO implement regression version into class
+
+    def __init__(self, eta=0.001, n_epoch=1_000, n_hidden=10, batch_size=10, classification=True):
+        self.eta = eta
+        self.n_epoch = n_epoch
+        self.n_hidden = n_hidden
+        self.batch_size = batch_size
+        self.classification = classification
+        self.b_h, self.W_h, self.b_o, self.W_o = None, None, None, None
+
+    @staticmethod
+    def onehot(y):
+        Y = np.zeros([np.unique(y).shape[0], y.shape[0]])
+        for idx, val in enumerate(y):
+            Y[int(val), idx] = 1
+        return Y.T
+
+    @staticmethod
+    def activation_sigmoid(Z):
+        return 1 / (1 + np.exp(-np.clip(Z, a_min=-250, a_max=250)))
+
+    @staticmethod
+    def derivative_sigmoid(Z):
+        return Z * (1 - Z)
+
+    def forward(self, X):
+        if self.classification:
+            Z_h = self.b_h + np.dot(X, self.W_h)
+            A_h = self.activation_sigmoid(Z_h)
+            Z_o = self.b_o + np.dot(A_h, self.W_o)
+            A_o = self.activation_sigmoid(Z_o)
+            return Z_h, A_h, Z_o, A_o
+
+    def predict(self, X):
+        _, _, Z_o, _ = self.forward(X)
+        return Z_o
+
+    def fit(self, X, y, l2=0):
+        if self.classification:
+            y = self.onehot(y)  # will become a matrix y, not vector
+        self.b_h = np.zeros(self.n_hidden)
+        self.W_h = np.zeros([X.shape[1], self.n_hidden])
+        self.b_o = np.zeros(y.shape[1])
+        self.W_o = np.zeros([self.n_hidden, y.shape[1]])
+        for i in range(self.n_epoch):
+            indices = np.arange(X.shape[0])
+            np.random.shuffle(indices)
+            for idx in range(0, X.shape[0]-self.batch_size, self.batch_size):
+                batch = indices[idx: idx+self.batch_size]
+                Z_h, A_h, Z_o, A_o = self.forward(X[batch])
+                delta_o = y[batch] - A_o
+                delta_h = np.dot(delta_o, self.W_o.T) * self.derivative_sigmoid(A_h)
+                self.b_o = self.b_o + self.eta * np.sum(delta_o, axis=0)
+                self.W_o = self.W_o + self.eta * np.dot(A_h.T, delta_o) + self.W_o * l2
+                self.b_h = self.b_h + self.eta * np.sum(delta_h, axis=0)
+                self.W_h = self.W_h + self.eta * np.dot(X[batch].T, delta_h) + self.W_h * l2
+            print('Epoch: %d' % i)
+        return self
+
+
+iris = pd.read_csv('data/iris.csv')
+X_train, X_test, y_train, y_test = train_test_split(
+    iris.iloc[:, 0:-1].values,
+    LabelEncoder().fit_transform(iris.iloc[:, -1].values),
+    test_size=0.5
+)
+nn = NN(n_epoch=10_000, eta=0.001)
+nn.fit(X_train, y_train)
+prediction = np.argmax(nn.predict(X_test), axis=1)
+print(
+    'Accuracy: %f' % (np.sum(prediction == y_test) / y_test.shape[0])
+)
 
 
 

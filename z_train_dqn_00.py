@@ -22,7 +22,7 @@ class ReplayBuffer:
         self.state_memory = np.zeros([self.mem_size, input_shape])
         self.new_state_memory = np.zeros([self.mem_size, input_shape])
         self.dtype = np.int8 if self.classification else np.float32
-        self.action_memory = np.zeros([self.mem_size, n_actions])
+        self.action_memory = np.zeros([self.mem_size, n_actions], dtype=self.dtype)
         self.reward_memory = np.zeros(self.mem_size)
         self.terminal_memory = np.zeros([self.mem_size], dtype=np.float32)  # 0 for dones, 1 for not dones
         self.mem_cntr = 0
@@ -65,20 +65,21 @@ def build_dqn(alpha, n_actions, input_dims, h1_dims, h2_dims):
 
 class Agent:
 
-    def __init__(self, alpha, gamma, n_action, epsilon, batch_size,
+    def __init__(self, alpha, gamma, n_actions, epsilon, batch_size,
                  input_dims, epsilon_dec=999/1000, epsilon_min=1/100,
                  mem_size=1_000_000, fname='z_train_dqn_00_model.h5'):
         self.alpha = alpha
         self.gamma = gamma
-        self.n_actions = n_action
-        self.action_space = np.arange(self.n_actions)  ##################
+        self.n_actions = n_actions
+        # self.action_space = np.arange(self.n_actions)  ##################
+        self.action_space = [i for i in range(n_actions)]
         self.epsilon = epsilon
         self.batch_size = batch_size
         self.epsilon_dec = epsilon_dec
         self.epsilon_min = epsilon_min
         self.model_file = 'data/' + fname
-        self.memory = ReplayBuffer(mem_size, input_dims, n_action, classification=True)
-        self.q_eval = build_dqn(alpha, n_action, input_dims, 256, 256)
+        self.memory = ReplayBuffer(mem_size, input_dims, n_actions, classification=True)
+        self.q_eval = build_dqn(alpha, n_actions, input_dims, 256, 256)
 
     def remember(self, s, a, r, s_, done):
         self.memory.store_transition(s, a, r, s_, done)
@@ -118,7 +119,7 @@ class Agent:
 env = gym.make('LunarLander-v2')
 n_games = 500
 agent = Agent(
-    alpha=0.0005, gamma=0.99, n_action=env.action_space.n,
+    alpha=0.0005, gamma=0.99, n_actions=env.action_space.n,
     epsilon=1., batch_size=64, input_dims=8,
 )
 # agent.load_model()
@@ -128,6 +129,7 @@ for i in range(n_games):
     score = 0
     s = env.reset()
     while True:
+        # env.render()
         a = agent.choose_action(s)
         s_, r, done, _ = env.step(a)
         score += r
