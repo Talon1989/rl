@@ -117,7 +117,7 @@ class Agent:
 
 
 env = gym.make('LunarLander-v2')
-n_games = 500
+n_games = 1_000
 agent = Agent(
     alpha=0.0005, gamma=0.99, n_actions=env.action_space.n,
     epsilon=1., batch_size=64, input_dims=8,
@@ -125,30 +125,51 @@ agent = Agent(
 # agent.load_model()
 scores = []
 eps_history = []
-for i in range(n_games):
-    score = 0
-    s = env.reset()
-    while True:
-        # env.render()
-        a = agent.choose_action(s)
-        s_, r, done, _ = env.step(a)
-        score += r
-        agent.remember(s, a, r, s_, done)
-        s = s_
-        agent.learn()
-        if done:
-            break
-    eps_history.append(agent.epsilon)
-    scores.append(score)
-    avg_score = np.float(np.mean(scores[max(0, i-100): i+1]))
-    print(
-        'episode %d, score %.2f, avg score %.2f' % (i, score, avg_score)
-    )
-    if i % 100 == 0 and i > 0:
-        agent.save_model()
+training = False
 
-x = [i+1 for i in range(n_games)]
-plot_learning_curve(x, scores, eps_history, filename='data/lunarlander.png')
+
+if training:
+    for i in range(n_games):
+        score = 0
+        s = env.reset()
+        while True:
+            env.render()
+            a = agent.choose_action(s)
+            s_, r, done, _ = env.step(a)
+            score += r
+            agent.remember(s, a, r, s_, done)
+            s = s_
+            agent.learn()
+            if done:
+                break
+        eps_history.append(agent.epsilon)
+        scores.append(score)
+        avg_score = np.float(np.mean(scores[max(0, i-100): i+1]))
+        print(
+            'episode %d, score %.2f, avg score %.2f' % (i, score, avg_score)
+        )
+        if i % 100 == 0 and i > 0:
+            agent.save_model()
+
+
+else:
+    agent.load_model()
+    for i in range(n_games):
+        score = 0
+        s = env.reset()
+        while True:
+            env.render()
+            a = agent.choose_action(s)
+            s_, r, done, _ = env.step(a)
+            score += r
+            s = s_
+            if done:
+                print('episode %d, score %.2f' % (i, score))
+                break
+
+
+# x = [i+1 for i in range(n_games)]
+# plot_learning_curve(x, scores, eps_history, filename='data/lunarlander.png')
 
 
 

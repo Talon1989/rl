@@ -92,8 +92,8 @@ class DQNAgent:
         self.memory = deque(maxlen=2_000)
         self.gamma = 0.95
         self.epsilon = 1.
-        self.epsilon_min = 0.001
-        self.epsilon_decay = 9_999 / 10_000
+        self.epsilon_min = 0.01
+        self.epsilon_decay = 995 / 1000
         self.batch_size = 64
         self.train_start = 1_000
         # self.model = build_model(input_shape=(self.n_states,), n_actions=self.n_actions)
@@ -165,17 +165,18 @@ class DQNAgent:
                 if i == 500:
                     counter += 1
                     print('%d times solved' % counter)
-                else:
-                    counter = 0
                 if done:
                     reward_memory.append(i)
                     print(
                         'episode: %d/%d, score: %d, epsilon:%f'
                         % (e, self.n_episodes, i, self.epsilon)
                     )
-                    if counter == 5:
-                        print('Problem solved 5 times in a row\nSaving trained model')
-                        self.save('data/cartpole_custom-dqn.h5')
+                    if counter == 10:
+                        print('Problem solved 10 times\nSaving trained model')
+                        if environment.unwrapped.spec.id == 'CartPole-v1':
+                            self.save('data/cartpole_custom-dqn.h5')
+                        elif environment.unwrapped.spec.id == 'CartPole-v0':
+                            self.save('data/cartpole_custom-v0-dqn.h5')
                         return
                     break
 
@@ -203,10 +204,28 @@ class DQNAgent:
                     print("episode: {}/{}, score: {}".format(e, self.n_episodes, i))
                     break
 
+    def test_og(self):
+        self.load("data/cartpole_custom-dqn.h5")
+        for e in range(self.n_episodes):
+            state = self.env.reset()
+            state = np.reshape(state, [1, self.n_states])
+            done = False
+            i = 0
+            while not done:
+                self.env.render()
+                action = np.argmax(self.model.predict(state))
+                next_state, reward, done, _ = self.env.step(action)
+                state = np.reshape(next_state, [1, self.n_states])
+                i += 1
+                if done:
+                    print("episode: {}/{}, score: {}".format(e, self.n_episodes, i))
+                    break
+
 
 environment = gym.make('CartPole-v1')
-n_states = environment.observation_space.shape[0]
-n_actions = environment.action_space.n
+n_states = environment.observation_space.shape[0]  # c position, c velocity, pole angle, pole ang vel
+n_actions = environment.action_space.n  # move left, move right
 agent = DQNAgent(environment, n_states, n_actions)
-agent.run()
+# agent.run()
 # agent.test()
+agent.test_og()
