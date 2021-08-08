@@ -154,6 +154,7 @@ if training:
 
 else:
     agent.load_model()
+    agent.epsilon = agent.epsilon_min
     for i in range(n_games):
         score = 0
         s = env.reset()
