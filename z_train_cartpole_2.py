@@ -63,7 +63,8 @@ class DQNAgent:
         for s, a, r, s_, done in minibatch:
             target = r
             if not done:
-                target = r + self.gamma * np.amax(self.model.predict(s_)[0])
+                # target = r + self.gamma * np.amax(self.model.predict(s_)[0])
+                target = r + self.gamma * np.max(self.model.predict(s_)[0])
             target_ = self.model.predict(s)
             target_[0][a] = target
             self.model.fit(s, target_, epochs=1, verbose=False)
@@ -138,7 +139,7 @@ def test():
 
 
 # play()
-test()
+# test()
 
 
 
