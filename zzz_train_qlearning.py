@@ -73,7 +73,39 @@ def value_iteration():
     return policy
 
 
-pol = value_iteration()
+def policy_iteration():
+    P = env.P
+    threshold = 1e-16
+    gamma = 99/100
+    policy = np.zeros(n_states)
+    v = np.zeros(n_states)
+    counter = 0
+    while True:
+        while True:
+            old_v = v.copy()
+            for s in range(n_states):
+                v[s] = np.sum([
+                    (r + gamma * old_v[s_]) * p
+                    for p, s_, r, _ in P[s][policy[s]]
+                ])
+            if np.sum(np.abs(old_v - v)) < threshold:
+                break
+        old_policy = policy.copy()
+        for s in range(n_states):
+            policy[s] = np.argmax([
+                np.sum([
+                    (r + gamma * v[s_]) * p
+                    for p, s_, r, _ in P[s][a]
+                ]) for a in range(n_actions)
+            ])
+        if (old_policy == policy).all():
+            print('breaking at %d policy change' % (counter + 1))
+            break
+        counter += 1
+    return policy
+
+
+pol = policy_iteration()
 print(np.sum(pol != real_target))
 
 
