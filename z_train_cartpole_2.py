@@ -138,7 +138,7 @@ def test():
                 break
 
 
-# play()
+play()
 # test()
 
 
