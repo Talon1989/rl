@@ -71,7 +71,6 @@ class CustomDqnCart:
             self.epsilon = self.epsilon * self.epsilon_decay
 
     def replay_2(self):
-        #  TODO rewrite better, try to remove loops, use native np methods instead
         minibatch = np.array(random.sample(self.replay_buffer, self.batch_size))
         sstates = minibatch[:, 0]
         actions = minibatch[:, 1].astype(np.int)
@@ -84,9 +83,9 @@ class CustomDqnCart:
             states_.append(sstates_[i][0])
         states = np.array(states)
         states_ = np.array(states_)
-        states = np.reshape(states, [states.shape[0], self.n_states])
-        states_ = np.reshape(states_, [states_.shape[0], self.n_states])
-        targets = rewards + self.gamma * np.amax(self.main_network.predict(states_), axis=1) * (1 - dones)
+        # states = np.reshape(states, [states.shape[0], self.n_states])
+        # states_ = np.reshape(states_, [states_.shape[0], self.n_states])
+        targets = rewards + self.gamma * np.amax(self.target_network.predict(states_), axis=1) * (1 - dones)
         q_values = self.main_network.predict(states)
         # q_values[:, actions] = targets
         for i in range(q_values.shape[0]):
@@ -113,17 +112,19 @@ class CustomDqnCart:
                     break
                 s = s_
             if len(self.replay_buffer) >= self.batch_size:
-                self.replay()
-                # self.replay_2()
-            # if episode > 0 and episode % 10 == 0:
-            #     print('\nUpdating target network\n')
-            #     self.update_target_network()
+                # self.replay()
+                self.replay_2()
+            if episode > 0 and episode % 10 == 0:
+                print('\nUpdating target network\n')
+                self.update_target_network()
             if episode > 0 and episode % 100 == 0:
                 print('\nSaving main network weights\n')
                 self.save_main_nn_weights()
 
 
     def test(self):
+        self.load_main_nn_weights()
+        self.epsilon = 0.
         for episode in range(self.n_episodes):
             s = self.env.reset()
             s = np.reshape(s, [1, self.n_states])
@@ -132,7 +133,7 @@ class CustomDqnCart:
                 a = self.e_greedy(s)
                 s_, _, done, _ = self.env.step(a)
                 if done:
-                    print('Episode %d , epsilon: %.2f , score: %d' % (episode, self.epsilon, i))
+                    print('Episode %d , score: %d' % (episode, i))
                     break
                 s = np.reshape(s_, [1, self.n_states])
 
@@ -141,7 +142,7 @@ class CustomDqnCart:
 
 
 dqn = CustomDqnCart(3000, 0.95, 2**5)
-dqn.train()
+dqn.test()
 
 
 
