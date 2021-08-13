@@ -6,7 +6,7 @@ import tensorflow
 from tensorflow import keras
 
 
-class CustomDqnCart:
+class CustomPriorityDqnCart:
 
     def __init__(self, n_episodes, gamma, batch_size, weights_location):
         self.n_episodes = n_episodes
@@ -19,7 +19,9 @@ class CustomDqnCart:
         self.epsilon = 1.
         self.epsilon_decay = 995/1000
         self.epsilon_min = 1/1000
-        self.replay_buffer = deque(maxlen=1_000)
+        self.replay_buffer = deque(maxlen=100)
+        self.beta = 1
+        self.sorted_replay_buffer = None
         self.main_network = self.build_nn()
         self.target_network = self.build_nn()
 
@@ -35,6 +37,14 @@ class CustomDqnCart:
             metrics=['accuracy']
         )
         return model
+
+    def calculate_priority_0(self, s, a, r, s_):
+        '''
+        :return: lower delta has lower priority (sort descending)
+        '''
+        delta = r + self.gamma * np.max(self.target_network.predict(s_)) - self.main_network.predict(s)[0][a]
+        delta = np.abs(delta) + 1
+        return delta
 
     def update_target_network(self):
         self.target_network.set_weights(self.main_network.get_weights())
@@ -53,26 +63,62 @@ class CustomDqnCart:
             return np.argmax(self.main_network.predict(s)[0])
 
     def store_transition(self, s, a, r, s_, done):
-        self.replay_buffer.append([s, a, r, s_, done])
+        priority = self.calculate_priority_0(s, a, r, s_)
+        self.replay_buffer.append([s, a, r, s_, done, priority])
+
+    def store_transition_sorted_scratch(self, s, a, r, s_, done):
+        # np.random.choice(['a', 'b', 'c'], size=3, replace=False, p=[0.1, 0.5, 0.4])
+        priority = self.calculate_priority_0(s, a, r, s_)
+        self.replay_buffer.append([s, a, r, s_, done, priority])
+        priorities = np.array(self.replay_buffer)[:, -1].astype(float)
+        denom = np.sum(priorities)
+        weighted_priorities = priorities / denom
+        vanilla_indices = np.random.choice(
+            np.arange(self.batch_size),
+            size=self.batch_size,
+            replace=False,
+            p=weighted_priorities
+        )
+
+    def store_transition_sorted(self, s, a, r, s_, done):
+        # np.random.choice(['a', 'b', 'c'], size=3, replace=False, p=[0.1, 0.5, 0.4])
+        priority = self.calculate_priority_0(s, a, r, s_)
+        self.replay_buffer.append([s, a, r, s_, done, priority])
+        if len(self.replay_buffer) == 100:
+            priorities = np.array(self.replay_buffer)[:, -1].astype(float)
+            denom = np.sum(np.exp(priorities * (1 - self.beta)))
+            weighted_priorities = np.exp(priorities * (1 - self.beta)) / denom
+            vanilla_indices = np.random.choice(
+                np.arange(100),
+                size=100,
+                replace=False,
+                p=weighted_priorities
+            )
+            self.sorted_replay_buffer = np.array([
+                x for _, x in sorted(zip(vanilla_indices, self.replay_buffer))
+            ])
 
     def replay(self):
-        minibatch = random.sample(self.replay_buffer, self.batch_size)
-        for s, a, r, s_, done in minibatch:
+        importance_weight = lambda x: ((1/self.batch_size) * x[-1]) ** (1 - 1/self.beta)
+        self.beta = self.beta * 995/1000
+        minibatch = sorted(self.replay_buffer, key=importance_weight, reverse=True)[0: self.batch_size]
+        # print(np.array(minibatch)[:, -1])
+        for s, a, r, s_, done, _ in minibatch:
             if done:
                 target = r
             else:
-                # target = r + self.gamma * np.max(self.target_network.predict(s_))
-                # target = r + self.gamma * np.max(self.target_network.predict(s_)[0])
                 target = r + self.gamma * np.max(self.main_network.predict(s_)[0])
             q_values = self.main_network.predict(s)
-            # q_values[a] = target
             q_values[0][a] = target
             self.main_network.fit(s, q_values, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon = self.epsilon * self.epsilon_decay
 
     def replay_2(self):
-        minibatch = np.array(random.sample(self.replay_buffer, self.batch_size))
+        # importance_weight = lambda x: ((1/self.batch_size) * x[-1]) ** (1 - 1/self.beta)
+        self.beta = self.beta * 995/1000
+        minibatch = self.sorted_replay_buffer[0: self.batch_size]
+        # minibatch = np.array(sorted(self.replay_buffer, key=lambda x: x[-1], reverse=False)[0: self.batch_size])
         sstates = minibatch[:, 0]
         actions = minibatch[:, 1].astype(np.int)
         rewards = minibatch[:, 2].astype(np.float)
@@ -92,32 +138,8 @@ class CustomDqnCart:
         if self.epsilon > self.epsilon_min:
             self.epsilon = self.epsilon * self.epsilon_decay
 
-    def replay_double(self):
-        minibatch = np.array(random.sample(self.replay_buffer, self.batch_size))
-        sstates = minibatch[:, 0]
-        actions = minibatch[:, 1].astype(np.int)
-        rewards = minibatch[:, 2].astype(np.float)
-        sstates_ = minibatch[:, 3]
-        dones = minibatch[:, 4].astype(np.bool)
-        states, states_ = [], []
-        for i in range(sstates.shape[0]):
-            states.append(sstates[i][0])
-            states_.append(sstates_[i][0])
-        states = np.array(states)
-        states_ = np.array(states_)
-        acts = np.argmax(self.main_network.predict(states_), axis=1)
-        predictions = self.gamma * self.target_network.predict(states_)
-        targets = np.zeros(self.batch_size)
-        for i in range(predictions.shape[0]):
-            targets[i] = rewards[i] + predictions[i][acts[i]] * (1 - dones[i])
-        q_values = self.main_network.predict(states)
-        for i in range(q_values.shape[0]):
-            q_values[i, actions[i]] = targets[i]
-        self.main_network.fit(states, q_values, epochs=1, verbose=0)
-        if self.epsilon > self.epsilon_min:
-            self.epsilon = self.epsilon * self.epsilon_decay
-
     def train(self):
+        scores = []
         for episode in range(self.n_episodes):
             s = self.env.reset()
             s = np.reshape(s, [1, self.n_states])
@@ -127,14 +149,17 @@ class CustomDqnCart:
                 s_, r, done, _ = self.env.step(a)
                 r = r if not done else -100
                 s_ = np.reshape(s_, [1, self.n_states])
-                self.store_transition(s, a, r, s_, done)
+                # self.store_transition(s, a, r, s_, done)
+                self.store_transition_sorted(s, a, r, s_, done)
                 # if len(self.replay_buffer) >= self.batch_size and i % 4 == 0:
                 #     self.replay()
                 if done:
-                    print('Episode %d , epsilon: %.2f , score: %d' % (episode, self.epsilon, i))
+                    scores.append(i)
+                    print('Episode %d , epsilon: %.2f , beta: %.2f , score: %d , avg scores: %.2f'
+                          % (episode, self.epsilon, self.beta,  i, np.sum(scores) / len(scores)))
                     break
                 s = s_
-            if len(self.replay_buffer) >= self.batch_size:
+            if len(self.replay_buffer) >= 100:
                 # self.replay()
                 self.replay_2()
                 # self.replay_double()
@@ -144,7 +169,6 @@ class CustomDqnCart:
             if episode > 0 and episode % 100 == 0:
                 print('\nSaving main network weights\n')
                 self.save_main_nn_weights()
-
 
     def test(self):
         self.load_main_nn_weights()
@@ -160,83 +184,11 @@ class CustomDqnCart:
                     print('Episode %d , score: %d' % (episode, i))
                     break
                 s = np.reshape(s_, [1, self.n_states])
-            if episode == 2:
-                return
 
 
 
-
-saved_weights_strings = [
-    'data/custom_dqn_cartpole/main_weight.hdf5',
-    'data/custom_dqn_cartpole/double_main_weight.hdf5'
-]
-
-dqn = CustomDqnCart(3000, 0.95, 2**5, saved_weights_strings[0])
-# dqn.train()
-dqn.test()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+dqn = CustomPriorityDqnCart(3000, 0.95, 2**5, 'data/custom_dqn_cartpole/prioritized_dqn_weights.hdf5')
+dqn.train()
 
 
 
