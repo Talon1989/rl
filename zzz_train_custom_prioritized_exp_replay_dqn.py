@@ -21,7 +21,6 @@ class CustomPriorityDqnCart:
         self.epsilon_min = 1/1000
         self.replay_buffer = deque(maxlen=100)
         self.beta = 1
-        self.sorted_replay_buffer = None
         self.main_network = self.build_nn()
         self.target_network = self.build_nn()
 
@@ -80,23 +79,27 @@ class CustomPriorityDqnCart:
             p=weighted_priorities
         )
 
+    def get_batch_from_sorted_buffer(self):
+        priorities = np.array(self.replay_buffer)[:, -1].astype(float)
+        denom = np.sum(np.exp(priorities * (1 - self.beta)))
+        weighted_priorities = np.exp(priorities * (1 - self.beta)) / denom
+        vanilla_indices = np.random.choice(
+            np.arange(100),
+            # size=self.batch_size,
+            size=100,
+            replace=False,
+            p=weighted_priorities
+        )
+        self.beta = self.beta * 995/1000
+        return np.array([
+            x for _, x in sorted(zip(vanilla_indices, self.replay_buffer))
+        ])[0: self.batch_size]
+
+
     def store_transition_sorted(self, s, a, r, s_, done):
         # np.random.choice(['a', 'b', 'c'], size=3, replace=False, p=[0.1, 0.5, 0.4])
         priority = self.calculate_priority_0(s, a, r, s_)
         self.replay_buffer.append([s, a, r, s_, done, priority])
-        if len(self.replay_buffer) == 100:
-            priorities = np.array(self.replay_buffer)[:, -1].astype(float)
-            denom = np.sum(np.exp(priorities * (1 - self.beta)))
-            weighted_priorities = np.exp(priorities * (1 - self.beta)) / denom
-            vanilla_indices = np.random.choice(
-                np.arange(100),
-                size=100,
-                replace=False,
-                p=weighted_priorities
-            )
-            self.sorted_replay_buffer = np.array([
-                x for _, x in sorted(zip(vanilla_indices, self.replay_buffer))
-            ])
 
     def replay(self):
         importance_weight = lambda x: ((1/self.batch_size) * x[-1]) ** (1 - 1/self.beta)
@@ -116,8 +119,8 @@ class CustomPriorityDqnCart:
 
     def replay_2(self):
         # importance_weight = lambda x: ((1/self.batch_size) * x[-1]) ** (1 - 1/self.beta)
-        self.beta = self.beta * 995/1000
-        minibatch = self.sorted_replay_buffer[0: self.batch_size]
+        minibatch = self.get_batch_from_sorted_buffer()
+        # minibatch = self.sorted_replay_buffer[0: self.batch_size]
         # minibatch = np.array(sorted(self.replay_buffer, key=lambda x: x[-1], reverse=False)[0: self.batch_size])
         sstates = minibatch[:, 0]
         actions = minibatch[:, 1].astype(np.int)
@@ -162,7 +165,6 @@ class CustomPriorityDqnCart:
             if len(self.replay_buffer) >= 100:
                 # self.replay()
                 self.replay_2()
-                # self.replay_double()
             if episode > 0 and episode % 10 == 0:
                 print('\nUpdating target network\n')
                 self.update_target_network()
