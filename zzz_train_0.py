@@ -7,9 +7,22 @@ import tensorflow
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
+from sklearn.metrics import r2_score
 
 
-# TODO finish regression implementation
+def r_2(y_true: np.array, y_pred: np.array):
+    mean_y = np.sum(y_true) / y_true.shape[0]
+    ss_tot = np.sum((y_true - mean_y) ** 2)
+    try:
+        y_pred.shape[1]
+        ss_res = 0
+        for i in range(y_pred.shape[0]):
+            ss_res += (y_true[i] - y_pred[i][0]) ** 2
+    except IndexError:
+        ss_res = np.sum((y_true - y_pred) ** 2)
+    return 1 - (ss_res / ss_tot)
+
+
 class NN:
 
     def __init__(self, n_epochs=500, eta=1/1000, n_hidden=10, batch_size=2**5, classification=True):
@@ -32,9 +45,9 @@ class NN:
         return 1 / (1 + np.exp(-np.clip(X, a_min=-250, a_max=250)))
 
     @staticmethod
-    def activation_regression(X):
-        X[X < 0] = 0
-        return X
+    def activation_regression(Z):
+        Z[Z < 0] = 0
+        return Z
 
     def forward(self, X):
         Z_h = self.b_h + np.dot(X, self.W_h)
@@ -79,9 +92,30 @@ class NN:
                 self.W_h = self.W_h + self.eta * np.dot(X[batch].T, delta_h)
         return self
 
+    @staticmethod
+    def regression_derivative(Z):
+        Z[Z < 0] = 0
+        Z[Z > 0] = 1
+        return Z
 
     def fit_regression(self, X, y):
-        pass
+        self.b_h = np.zeros(self.n_hidden)
+        self.W_h = np.random.normal(loc=0, scale=0.01, size=[X.shape[1], self.n_hidden])
+        self.b_o = 0
+        self.W_o = np.random.normal(loc=0, scale=0.01, size=[self.n_hidden, 1])
+        for i in range(self.n_epochs):
+            indices = np.arange(X.shape[0])
+            np.random.shuffle(indices)
+            for idx in range(0, X.shape[0] - self.batch_size, self.batch_size):
+                batch = indices[idx: idx + self.batch_size]
+                Z_h, A_h, Z_o, A_o = self.forward(X[batch])
+                delta_o = y[batch].reshape(-1, 1) - A_o
+                delta_h = np.dot(delta_o, self.W_o.T) * self.regression_derivative(A_h)
+                self.b_o = self.b_o + self.eta * np.sum(delta_o, axis=0)
+                self.W_o = self.W_o + self.eta * np.dot(A_h.T, delta_o)
+                self.b_h = self.b_h + self.eta * np.sum(delta_h, axis=0)
+                self.W_h = self.W_h + self.eta * np.dot(X[batch].T, delta_h)
+        return self
 
 
 # iris = pd.read_csv('data/iris.csv')
@@ -94,6 +128,16 @@ class NN:
 # print(
 #     np.sum(predictions == y_test) / y_test.shape[0]
 # )
+
+iris = pd.read_csv('data/iris.csv')
+X_ = iris.iloc[:, 0:-2].values
+y_ = iris.iloc[:, -2].values
+X_train, X_test, y_train, y_test = train_test_split(X_, y_, test_size=1/2)
+nn = NN(n_epochs=4_000, eta=0.0001, classification=False)
+nn.fit(X_train, y_train)
+predictions = nn.predict(X_test)
+print('np r2 score: %.4f' % r2_score(y_test, predictions))
+print('custom r2 score: %.4f' % r_2(y_test, predictions))
 
 
 def q_learning():
@@ -229,10 +273,8 @@ class DQL:
                 self.update_target_nn()
 
 
-dql = DQL()
-dql.train()
-
-
+# dql = DQL()
+# dql.train()
 
 
 

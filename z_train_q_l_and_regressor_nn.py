@@ -91,7 +91,7 @@ class ClassifierNN:
 
 class RegressorNN:
 
-    def __init__(self, eta=0.01, n_iter=5_000, n_hidden=10, batch_size=10):
+    def __init__(self, n_iter=5_000, eta=0.01, n_hidden=10, batch_size=10):
         self.eta = eta
         self.n_iter = n_iter
         self.n_hidden = n_hidden
@@ -165,7 +165,7 @@ y_ = iris.iloc[:, -2].values
 X_train, X_test, y_train, y_test = train_test_split(
     X_, y_, train_size=0.5
 )
-nn = RegressorNN(n_iter=5_000, eta=0.001, n_hidden=5)
+nn = RegressorNN(n_iter=4_000, eta=0.0001, n_hidden=10)
 nn.fit(X_train, y_train)
 predictions = nn.predict(X_test)
 print(r2_score(y_test, predictions))
