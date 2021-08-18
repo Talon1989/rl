@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow import keras
 
 
-#  TODO finish regression implementation
+# TODO finish regression implementation
 class NN:
 
     def __init__(self, n_epochs=500, eta=1/1000, n_hidden=10, batch_size=2**5, classification=True):
