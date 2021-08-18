@@ -150,8 +150,6 @@ np.random.seed(1)
 
 class NN:  # hardcoded for classification
 
-    #  TODO implement regression version into class
-
     def __init__(self, eta=0.001, n_epoch=1_000, n_hidden=10, batch_size=10, classification=True):
         self.eta = eta
         self.n_epoch = n_epoch

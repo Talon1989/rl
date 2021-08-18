@@ -191,7 +191,6 @@ class CustomPriorityDqnCart:
 
 dqn = CustomPriorityDqnCart(3000, 0.95, 2**5, 'data/custom_dqn_cartpole/prioritized_dqn_weights.hdf5')
 dqn.train()
-print()
 
 
 

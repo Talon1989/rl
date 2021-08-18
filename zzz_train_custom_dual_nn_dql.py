@@ -168,12 +168,13 @@ class CustomDqnCart:
 
 saved_weights_strings = [
     'data/custom_dqn_cartpole/main_weight.hdf5',
-    'data/custom_dqn_cartpole/double_main_weight.hdf5'
+    'data/custom_dqn_cartpole/double_main_weight.hdf5',
+    'data/custom_dqn_cartpole/test.hdf5'
 ]
 
-dqn = CustomDqnCart(3000, 0.95, 2**5, saved_weights_strings[0])
-# dqn.train()
-dqn.test()
+dqn = CustomDqnCart(3000, 0.95, 2**5, saved_weights_strings[2])
+dqn.train()
+# dqn.test()
 
 
 
