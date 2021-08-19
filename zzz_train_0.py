@@ -14,7 +14,7 @@ def r_2(y_true: np.array, y_pred: np.array):
     mean_y = np.sum(y_true) / y_true.shape[0]
     ss_tot = np.sum((y_true - mean_y) ** 2)
     try:
-        y_pred.shape[1]
+        trying = y_pred.shape[1]
         ss_res = 0
         for i in range(y_pred.shape[0]):
             ss_res += (y_true[i] - y_pred[i][0]) ** 2
