@@ -217,8 +217,8 @@ dql = DQL(n_episodes=3_000)
 # dql.load_weights('data/zzz_train_q_ql_dql_/main_weight.hdf5')
 # dql.epsilon = 2/10
 # dql.target_nn.load_weights('data/zzz_train_q_ql_dql_/main_weight.hdf5')
-dql.train()
-# dql.test(10)
+# dql.train()
+dql.test(10)
 
 
 
