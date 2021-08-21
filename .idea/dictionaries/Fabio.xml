@@ -5,6 +5,7 @@
       <w>bfgs</w>
       <w>cartpole</w>
       <w>cbandits</w>
+      <w>checkpointer</w>
       <w>cntr</w>
       <w>crossentropy</w>
       <w>dashdot</w>
@@ -14,12 +15,14 @@
       <w>dones</w>
       <w>dtype</w>
       <w>fname</w>
+      <w>fnames</w>
       <w>frameskip</w>
       <w>itemfreq</w>
       <w>linewidth</w>
       <w>longdash</w>
       <w>lunarlander</w>
       <w>maxiter</w>
+      <w>maxlen</w>
       <w>minibatch</w>
       <w>mnist</w>
       <w>onehot</w>
