@@ -67,7 +67,6 @@ def q_learning(n_episodes=1_000):
             s = s_
     return q
 
-
 # q = q_learning(10_000)
 
 
@@ -142,6 +141,13 @@ class DQL:
 
     def replay(self):
         states, actions, rewards, states_, dones = self.get_updated_minibatch()
+        print()
+        print(states.shape)
+        print(actions.shape)
+        print(rewards.shape)
+        print(states_.shape)
+        print(dones.shape)
+        print()
         targets = rewards + self.gamma * np.max(self.target_nn.predict(states_), axis=1) * (1 - dones)
         q_values = self.main_nn.predict(states)
         for i in range(self.batch_size):
@@ -187,7 +193,7 @@ class DQL:
                 plt.legend(loc='best')
                 plt.show()
                 plt.clf()
-                self.save_weights('data/zzz_train_q_ql_dql_/main_weight.hdf5')
+                # self.save_weights('data/zzz_train_q_ql_dql_/main_weight.hdf5')
 
         return self
 
@@ -217,8 +223,8 @@ dql = DQL(n_episodes=3_000)
 # dql.load_weights('data/zzz_train_q_ql_dql_/main_weight.hdf5')
 # dql.epsilon = 2/10
 # dql.target_nn.load_weights('data/zzz_train_q_ql_dql_/main_weight.hdf5')
-# dql.train()
-dql.test(10)
+dql.train()
+# dql.test(10)
 
 
 

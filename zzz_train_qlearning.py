@@ -67,7 +67,7 @@ def value_iteration():
     for s in range(n_states):
         policy[s] = np.argmax([
             np.sum([
-                (r + gamma * old_v[s_]) * p for p, s_, r, _ in P[s][a]
+                (r + gamma * v[s_]) * p for p, s_, r, _ in P[s][a]
             ]) for a in range(n_actions)
         ])
     return policy

@@ -3,6 +3,7 @@
     <words>
       <w>amax</w>
       <w>bfgs</w>
+      <w>bottone</w>
       <w>cartpole</w>
       <w>cbandits</w>
       <w>checkpointer</w>
@@ -12,6 +13,7 @@
       <w>dashmap</w>
       <w>denom</w>
       <w>diagonalization</w>
+      <w>distr</w>
       <w>dones</w>
       <w>dtype</w>
       <w>fname</w>
