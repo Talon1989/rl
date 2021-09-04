@@ -40,10 +40,14 @@ class ReplayBuffer:
         buffer_rewards = [self.rewards[i] for i in indices][0: batch_size]
         pre_buffer_next_states = [self.next_states[i] for i in indices][0: batch_size]
         buffer_dones = [self.dones[i] for i in indices][0: batch_size]
-        buffer_states, buffer_next_states = [], []
-        for i in range(len(pre_buffer_states)):
-            buffer_states.append(pre_buffer_states[i][0])
-            buffer_next_states.append(pre_buffer_next_states[i][0])
+        # buffer_states, buffer_next_states = [], []
+        # print(pre_buffer_states)
+        # for i in range(len(pre_buffer_states)):
+        #     buffer_states.append(pre_buffer_states[i][0])
+        #     buffer_next_states.append(pre_buffer_next_states[i][0])
+        # print(buffer_states)
+        buffer_states = np.squeeze(pre_buffer_states)
+        buffer_next_states = np.squeeze(pre_buffer_next_states)
         return np.array(buffer_states), np.array(buffer_actions), np.array(buffer_rewards),\
                np.array(buffer_next_states), np.array(buffer_dones)
 
@@ -51,16 +55,16 @@ class ReplayBuffer:
         return len(self.actions)
 
 
-buffer = ReplayBuffer(max_size=50)
-for i in range(200):
-    buffer.remember(
-        np.random.normal(0, 1, 4),
-        np.random.randint(0, 4),
-        np.random.uniform(-2, 10),
-        np.random.normal(0, 1, 4),
-        np.random.binomial(1, 0.5)
-    )
-states, actions, rewards, states_, dones = buffer.get_buffer(10)
+# buffer = ReplayBuffer(max_size=50)
+# for i in range(200):
+#     buffer.remember(
+#         np.random.normal(0, 1, 4),
+#         np.random.randint(0, 4),
+#         np.random.uniform(-2, 10),
+#         np.random.normal(0, 1, 4),
+#         np.random.binomial(1, 0.5)
+#     )
+# states, actions, rewards, states_, dones = buffer.get_buffer(10)
 
 
 class DQL:
@@ -123,10 +127,10 @@ class DQL:
         # print(states_.shape)
         # print(dones.shape)
         # print()
-        if self.epsilon > 0.05:
-            targets = rewards + self.gamma * (1 - self.epsilon) * np.max(self.target_nn.predict(states_), axis=1) * (1 - dones)
-        else:
-            targets = rewards + self.gamma * np.max(self.target_nn.predict(states_), axis=1) * (1 - dones)
+        # if self.epsilon > 0.05:
+        #     targets = rewards + self.gamma * (1 - self.epsilon) * np.max(self.target_nn.predict(states_), axis=1) * (1 - dones)
+        # else:
+        targets = rewards + self.gamma * np.max(self.target_nn.predict(states_), axis=1) * (1 - dones)
         q_values = self.main_nn.predict(states)
         for i in range(self.batch_size):
             q_values[i][actions[i]] = targets[i]
